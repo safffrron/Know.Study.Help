@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Know.Stdy.Help</title>
+</head>
+<body>
+    <h1>This is Experiment Page.</h1>
+    {% for post in posts %}
+        <h3>{{ post.author }}</h3>
+        <p>Book: {{post.Book}}</p>
+        <p>Year-published: {{post.Year}}</p>
+        <hr/><br/>
+    {% endfor %}
+</body>
+</html>
