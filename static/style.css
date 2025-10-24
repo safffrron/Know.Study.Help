@@ -1,0 +1,91 @@
+body {
+    background-color: #f8f9fa;
+    font-family: "Segoe UI", sans-serif;
+}
+
+.group-header {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.sidebar {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 1.5rem;
+    height: 100%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.resource-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.resource-item:last-child {
+    border-bottom: none;
+}
+
+.timestamp {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.upload-form {
+    background: #ffffff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.members-list {
+    list-style: none;
+    padding: 0;
+}
+
+.members-list li {
+    background: #e9ecef;
+    display: inline-block;
+    padding: 0.4rem 0.75rem;
+    border-radius: 20px;
+    margin: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.resource-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.resource-item form button {
+    border-radius: 50%;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+    line-height: 1;
+}
+
+.btn-delete i {
+    font-size: 0.9rem;
+}
+
+
+.flash-messages .alert {
+    opacity: 1;
+    animation: fadeOut 4s forwards; /* 4s total duration */
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    background-color: #d1e7dd; /* success green */
+    color: #0f5132;
+}
+
+@keyframes fadeOut {
+    0%   { opacity: 1; }
+    80%  { opacity: 1; }  /* stay visible for most of the time */
+    100% { opacity: 0; display: none; }
+}
