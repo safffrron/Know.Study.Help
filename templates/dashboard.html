@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Course Search App{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Search Section -->
+    <section class="search-section">
+        <h2>Search Courses</h2>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search for courses...">
+            <button onclick="searchCourses()" class="btn btn-primary">Search</button>
+        </div>
+        
+        <div id="searchResults" class="search-results"></div>
+    </section>
+
+    {% if joined_groups %}
+    <section class="groups-section joined-section">
+        <div class="section-header">
+            <h2>Your Groups</h2>
+            <span class="section-subtitle">Groups you've already joined</span>
+        </div>
+        <div class="groups-grid">
+            {% for group in joined_groups %}
+            <!-- <div class="group-card joined" onclick="window.location.href='{{ url_for("group_page", group_id=group.id) }}'"> -->
+                <a href="{{ url_for('group_page', group_id=group.id) }}" class="group-card joined">
+                    <div class="group-card-header">
+                    <h3>{{ group.name }}</h3>
+                    <span class="badge badge-joined">Joined</span>
+                    </div>
+                    <small class="group-id">ID: {{ group.id }}</small>
+                    <p>{{ group.description or 'No description' }}</p>
+                    <div class="group-info">
+                        <span>👥 {{ group.members|length }} members</span>
+                        <span>⭐ Creator: {{ group.creator.username }}</span>
+                    </div>
+                </a>
+                
+            <!-- </div> -->
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Groups Section -->
+    <section class="groups-section">
+        <div class="section-header">
+            <h2>Discover Groups</h2>
+            <span class="section-subtitle">Join new study groups or create your own</span>
+        </div>
+        
+        <div class="group-actions">
+            <button onclick="openCreateGroupModal()" class="btn btn-primary">Create Group</button>
+            <button onclick="openJoinGroupModal()" class="btn btn-secondary">Join Group</button>
+        </div>
+
+        <div class="groups-grid">
+            {% for group in groups %}
+            {% set status = join_request_statuses.get(group.id) %}
+            <div class="group-card">
+                <h3>{{ group.name }}</h3>
+                <small class="group-id">ID: {{ group.id }}</small>
+                <p>{{ group.description or 'No description' }}</p>
+                <div class="group-info">
+                    <span>👥 {{ group.members|length }} members</span>
+                    <span>⭐ Creator: {{ group.creator.username }}</span>
+                </div>
+                <div class="group-card-actions">
+                    {% if status == 'pending' %}
+                    <span class="badge badge-pending">Request pending</span>
+                    {% elif status == 'rejected' %}
+                    <button type="button" class="btn btn-secondary" onclick="openJoinGroupModal({{ group.id }})">Request again</button>
+                    {% else %}
+                    <button type="button" class="btn btn-primary" onclick="openJoinGroupModal({{ group.id }})">Request to Join</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <p class="no-groups">No groups available. Create one to get started!</p>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+
+<!-- Create Group Modal -->
+<div id="createGroupModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeCreateGroupModal()">&times;</span>
+        <h2>Create New Group</h2>
+        <form method="POST" action="{{ url_for('create_group') }}">
+            <div class="form-group">
+                <label for="groupName">Group Name *</label>
+                <input type="text" id="groupName" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="groupDescription">Description</label>
+                <textarea id="groupDescription" name="description" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Group</button>
+        </form>
+    </div>
+</div>
+
+<!-- Join Group Modal -->
+<div id="joinGroupModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeJoinGroupModal()">&times;</span>
+        <h2>Request to Join</h2>
+        <form method="POST" action="{{ url_for('join_group') }}">
+            <div class="form-group">
+                <label for="joinGroupId">Group ID *</label>
+                <input type="number" id="joinGroupId" name="group_id" required>
+            </div>
+            <div class="form-group">
+                <label for="joinGroupMessage">Message (optional)</label>
+                <textarea id="joinGroupMessage" name="message" rows="3" placeholder="Share why you want to join this group"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Join Group</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Search courses
+async function searchCourses() {
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) {
+        showNotification('Please enter a search term', 'error');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('query', query);
+
+    try {
+        const response = await fetch('/search', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Unable to fetch courses right now.');
+        }
+
+        displayCourses(data.courses, data.message);
+    } catch (error) {
+        displayCourses([]);
+        showNotification(error.message || 'Search failed', 'error');
+    }
+}
+
+function displayCourses(courses, message = '') {
+    const resultsDiv = document.getElementById('searchResults');
+    
+    if (courses.length === 0) {
+        const emptyMessage = message || 'No courses found';
+        resultsDiv.innerHTML = `<p class="no-results">${emptyMessage}</p>`;
+        return;
+    }
+
+    resultsDiv.innerHTML = courses.map(course => `
+        <div class="course-card">
+            <h3>${course.title}</h3>
+            <div class="course-details">
+                <span><strong>Provider:</strong> ${course.provider}</span>
+                <span><strong>Level:</strong> ${course.level}</span>
+                <span><strong>Duration:</strong> ${course.duration}</span>
+                ${course.rating ? `<span><strong>Rating:</strong> ${course.rating}${course.reviews ? ` (${course.reviews})` : ''}</span>` : ''}
+            </div>
+            ${course.skills && course.skills.length ? `
+            <div class="course-skills">
+                <strong>Skills:</strong>
+                ${course.skills.map(skill => `<span class="skill-pill">${skill}</span>`).join('')}
+            </div>` : ''}
+            <a href="${course.link}" target="_blank" class="btn btn-secondary">Open in Coursera</a>
+        </div>
+    `).join('');
+}
+
+// Modal functions
+function openCreateGroupModal() {
+    document.getElementById('createGroupModal').style.display = 'block';
+}
+
+function closeCreateGroupModal() {
+    document.getElementById('createGroupModal').style.display = 'none';
+}
+
+function openJoinGroupModal(groupId = '') {
+    const modal = document.getElementById('joinGroupModal');
+    const groupIdInput = document.getElementById('joinGroupId');
+    if (groupIdInput) {
+        groupIdInput.value = groupId || '';
+    }
+    modal.style.display = 'block';
+}
+
+function closeJoinGroupModal() {
+    const modal = document.getElementById('joinGroupModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+
+// Search on Enter key
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        searchCourses();
+    }
+});
+
+</script>
+{% endblock %}
